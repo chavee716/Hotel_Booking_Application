@@ -1,41 +1,80 @@
-import {useEffect, useState} from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
-import {Link} from "react-router-dom";
-import Image from "../Image.jsx";
-
+import { Link } from "react-router-dom";
 
 export default function IndexPage() {
-  const [places,setPlaces] = useState([]);
+  const [places, setPlaces] = useState([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+
   useEffect(() => {
     axios.get('http://localhost:5000/api/places').then(({ data }) => {
-      console.log('Fetched places:', data); // Add this line
-      if (Array.isArray(data)) {
-        setPlaces(data);
-      } else {
-        console.error('Expected an array but received:', data);
-        setPlaces([]); // Fallback to an empty array
-      }
+      setPlaces(Array.isArray(data) ? data : []);
     });
   }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % places.length);
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [places]);
+
   return (
-    <div className="mt-8  grid gap-x-6 gap-y-8 grid-cols-2 md:grid-cols-3 lg:grid-cols-3">
-      {places.length > 0 && places.map(place => (
-        <Link to={'/place/'+place._id}>
-          <div className="bg-gray-500 mb-2 rounded-2xl flex">
-          {console.log('Photos for place:', place.photos)} {/* Add this line for debugging */}
-            {place.photos?.[0] && (
-               
-               <Image className="rounded-2xl object-cover aspect-square" src={place.photos[0].url}/*src={`http://localhost:5000${place.photos[0]}`}*/ alt="" />
-               //{place.photos[0].url}
-            )}
+    <div className="mt-20">
+      {/* Slideshow */}
+      <div className="relative w-full h-48 md:h-64 overflow-hidden mb-8 rounded-2xl">
+        {places.length > 0 && places.map((place, index) => (
+          <div
+            key={place._id}
+            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+              index === currentSlide ? 'opacity-100 z-10' : 'opacity-0'
+            }`}
+          >
+            <img
+              src={`http://localhost:5000${place.photos?.[0]?.url}`}
+              alt={place.title || "Hotel"}
+              className="w-full h-full object-cover rounded-2xl scale-90"
+            />
           </div>
-          <h2 className="font-bold">{place.title}</h2>
-          <h3 className="text-sm text-gray-500">{place.address}</h3>
-          <div className="mt-1">
-            <span className="font-bold">${place.price}</span> per night
-          </div>
-        </Link>
-      ))}
+        ))}
+        <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+          {places.map((_, index) => (
+            <span
+              key={index}
+              className={`w-3 h-3 rounded-full ${
+                index === currentSlide ? 'bg-blue-600' : 'bg-gray-400'
+              }`}
+            ></span>
+          ))}
+        </div>
+      </div>
+
+      {/* Place Cards */}
+      <div className="grid gap-x-6 gap-y-8 grid-cols-7 md:grid-cols-4 lg:grid-cols-4">
+        {places.length > 0 && places.map(place => (
+          <Link 
+            to={`/place/${place._id}`} 
+            key={place._id} 
+            className="transform transition duration-300 hover:scale-105 hover:shadow-lg"
+          >
+            <div className="bg-gray-500 mb-2 rounded-2xl flex overflow-hidden">
+              {place.photos?.[0]?.url && (
+                <img
+                  className="rounded-2xl object-cover aspect-square transition duration-300 hover:opacity-90"
+                  src={`http://localhost:5000${place.photos[0].url}`}
+                  alt={place.title || "Hotel"}
+                />
+              )}
+            </div>
+            <h2 className="font-bold transition duration-300 hover:text-blue-600">{place.title}</h2>
+            <h3 className="text-sm text-gray-500">{place.address}</h3>
+            <div className="mt-1">
+              <span className="font-bold">${place.price}</span> per night
+            </div>
+          </Link>
+        ))}
+      </div>
     </div>
   );
 }

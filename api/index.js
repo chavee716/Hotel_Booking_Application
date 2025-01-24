@@ -11,7 +11,6 @@ const imageDownloader = require('image-downloader');
 const multer = require('multer');
 const fs = require('fs');
 const mime = require('mime-types');
-const placesSearchRoutes = require('./placesRoutes.js');
 
 require('dotenv').config();
 const app = express();
@@ -27,7 +26,6 @@ app.use(cors({
   credentials: true,
   origin: 'http://localhost:5173',
 }));
-app.use('/api/places', placesSearchRoutes);
 
 // Helper function to get user data from token
 function getUserDataFromReq(req) {
@@ -44,6 +42,42 @@ function getUserDataFromReq(req) {
   });
 }
 
+// Search places route
+app.get('/api/places/search', async (req, res) => {
+  try {
+    const { query, guests } = req.query;
+    console.log('Search request received:', { query, guests });
+
+    let searchQuery = {};
+
+    if (query) {
+      searchQuery.$or = [
+        { title: { $regex: query, $options: 'i' } },
+        { address: { $regex: query, $options: 'i' } }
+      ];
+    }
+
+    if (guests) {
+      searchQuery.maxGuests = { $gte: parseInt(guests) };
+    }
+
+    console.log('MongoDB query:', searchQuery);
+
+    const places = await Place.find(searchQuery)
+      .sort({ price: 1 })
+      .limit(50);
+
+    console.log(`Found ${places.length} results`);
+    res.json({ places });
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(500).json({ 
+      message: 'Error performing search', 
+      error: error.message 
+    });
+  }
+});
+
 // Test route
 app.get('/api/test', (req, res) => {
   res.json('test ok');
@@ -54,7 +88,6 @@ app.post('/api/register', async (req, res) => {
   const {name, email, password} = req.body;
   
   try {
-    // Check if user already exists
     const existingUser = await User.findOne({email});
     if (existingUser) {
       return res.status(422).json({error: 'Email already exists'});
@@ -195,7 +228,7 @@ app.post('/api/places', async (req, res) => {
       owner: userData.id,
       title, 
       address,
-      photos: addedPhotos,
+      photos: addedPhotos.map(url => ({ url })),
       description,
       perks,
       extraInfo,
@@ -254,8 +287,16 @@ app.put('/api/places', async (req, res) => {
     }
 
     await placeDoc.updateOne({
-      title, address, photos: addedPhotos, description,
-      perks, extraInfo, checkIn, checkOut, maxGuests, price,
+      title, 
+      address, 
+      photos: addedPhotos.map(url => ({ url })),
+      description,
+      perks, 
+      extraInfo, 
+      checkIn, 
+      checkOut, 
+      maxGuests, 
+      price,
     });
 
     res.json('ok');

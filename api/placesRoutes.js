@@ -1,75 +1,34 @@
 const express = require('express');
 const router = express.Router();
-const Place = require('./models/Place'); // Assuming you have a Place model
+const Place = require('./models/Place');
 
-// Search places API endpoint
 router.get('/search', async (req, res) => {
   try {
-    const { 
-      destination, 
-      checkIn, 
-      checkOut, 
-      guests 
-    } = req.query;
+    const { query, guests } = req.query;
+    console.log('Search params:', { query, guests });
 
-    // Build dynamic search query
     let searchQuery = {};
 
-    // Filter by destination (case-insensitive partial match)
-    if (destination) {
-      searchQuery.location = { 
-        $regex: destination, 
-        $options: 'i' 
-      };
+    if (query) {
+      searchQuery.$or = [
+        { title: { $regex: query, $options: 'i' } },
+        { address: { $regex: query, $options: 'i' } }
+      ];
     }
 
-    // Filter by guest capacity
     if (guests) {
       searchQuery.maxGuests = { $gte: parseInt(guests) };
     }
 
-    // Filter by availability
-    if (checkIn && checkOut) {
-      searchQuery.$and = [
-        { 
-          bookings: { 
-            $not: { 
-              $elemMatch: { 
-                $or: [
-                  { 
-                    $and: [
-                      { checkInDate: { $lt: new Date(checkOut) } },
-                      { checkOutDate: { $gt: new Date(checkIn) } }
-                    ]
-                  }
-                ]
-              } 
-            } 
-          } 
-        }
-      ];
-    }
-
-    // Perform search with pagination
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skip = (page - 1) * limit;
+    console.log('MongoDB query:', searchQuery);
 
     const places = await Place.find(searchQuery)
-      .skip(skip)
-      .limit(limit)
-      .select('-bookings'); // Exclude booking details for privacy
+      .sort({ price: 1 })
+      .limit(50);
 
-    // Count total matching results
-    const totalResults = await Place.countDocuments(searchQuery);
+    console.log('Results found:', places.length);
 
-    res.json({
-      places,
-      currentPage: page,
-      totalPages: Math.ceil(totalResults / limit),
-      totalResults
-    });
-
+    res.json({ places });
   } catch (error) {
     console.error('Search error:', error);
     res.status(500).json({ 

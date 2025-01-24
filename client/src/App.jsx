@@ -1,17 +1,17 @@
 import './App.css'
 import {Route, Routes} from "react-router-dom";
 import IndexPage from "./pages/IndexPage.jsx";
-import LoginPage from "./pages/LoginPage";
-import Layout from "./Layout";
-import RegisterPage from "./pages/RegisterPage";
+import LoginPage from "./pages/LoginPage.jsx";
+import Layout from "./components/Layout.jsx";
+import RegisterPage from "./pages/RegisterPage.jsx";
 import axios from "axios";
-import {UserContextProvider} from "./UserContext";
+import {UserContextProvider} from "./components/UserContext.jsx";
 import ProfilePage from "./pages/ProfilePage.jsx";
-import PlacesPage from "./pages/PlacesPage";
-import PlacesFormPage from "./pages/PlacesFormPage";
-import PlacePage from "./pages/PlacePage";
-import BookingsPage from "./pages/BookingsPage";
-import BookingPage from "./pages/BookingPage";
+import PlacesPage from "./pages/PlacesPage.jsx";
+import PlacesFormPage from "./pages/PlacesFormPage.jsx";
+import PlacePage from "./pages/PlacePage.jsx";
+import BookingsPage from "./pages/BookingsPage.jsx";
+import BookingPage from "./pages/BookingPage.jsx";
 import SearchResultsPage from './pages/SearchResultsPage.jsx';
 
 axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
@@ -33,6 +33,7 @@ function App() {
           <Route path="/account/bookings" element={<BookingsPage />} />
           <Route path="/account/bookings/:id" element={<BookingPage />} />
           <Route path="/search" element={<SearchResultsPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Route>
       </Routes>
     </UserContextProvider>
