@@ -9,6 +9,7 @@ export default function SearchResultsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [sortBy, setSortBy] = useState('price');
+  const [searchQuery, setSearchQuery] = useState(location.state?.searchParams?.destination || '');
 
   useEffect(() => {
     const searchParams = location.state?.searchParams || {};
@@ -32,12 +33,32 @@ export default function SearchResultsPage() {
   };
 
   const sortResults = (results) => {
-    return [...results].sort((a, b) => {
-      if (sortBy === 'price') {
-        return a.price - b.price;
-      }
-      return 0;
-    });
+    let sortedResults = [...results];
+
+    if (sortBy === 'price') {
+      sortedResults = sortedResults.sort((a, b) => a.price - b.price);
+    } else if (sortBy === 'relevance') {
+      // Sort by relevance (based on the search query)
+      sortedResults = sortedResults.sort((a, b) => {
+        const relevanceA = calculateRelevance(a, searchQuery);
+        const relevanceB = calculateRelevance(b, searchQuery);
+        return relevanceB - relevanceA; // Descending order (most relevant first)
+      });
+    }
+
+    return sortedResults;
+  };
+
+  // Simple relevance calculation based on matching the title or description to the search query
+  const calculateRelevance = (place, query) => {
+    if (!query) return 0; // If no search query, return 0 relevance
+
+    // Case-insensitive match
+    const titleMatch = place.title.toLowerCase().includes(query.toLowerCase()) ? 1 : 0;
+    const descriptionMatch = place.description.toLowerCase().includes(query.toLowerCase()) ? 1 : 0;
+
+    // Return total relevance score based on title and description matches
+    return titleMatch + descriptionMatch; // Higher score if matched in title or description
   };
 
   if (loading) return <div className="mt-20 text-center">Loading...</div>;
@@ -59,6 +80,7 @@ export default function SearchResultsPage() {
             className="p-2 border rounded-lg"
           >
             <option value="price">Sort by Price</option>
+            <option value="relevance">Sort by Relevance</option>
           </select>
         </div>
 

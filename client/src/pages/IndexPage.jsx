@@ -26,7 +26,7 @@ export default function IndexPage() {
   return (
     <div className="mt-20">
       {/* Weather and Slideshow Section */}
-      <div className="grid grid-cols-1 md:grid-cols-[3fr_1fr] gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-[3fr_1fr] gap-4 mb-6 mt-10">
         {/* Slideshow */}
         <div className="relative w-full h-48 md:h-64 overflow-hidden rounded-2xl">
           {places.length > 0 &&
@@ -78,7 +78,7 @@ export default function IndexPage() {
       </div>
 
       {/* Place Cards */}
-      <div className="grid gap-x-6 gap-y-8 grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+      <div className="grid gap-x-6 gap-y-8 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mt-10">
         {places.length > 0 &&
           places.map((place) => (
             <Link
