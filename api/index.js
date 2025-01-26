@@ -11,6 +11,7 @@ const imageDownloader = require('image-downloader');
 const multer = require('multer');
 const fs = require('fs');
 const mime = require('mime-types');
+const axios = require('axios'); 
 
 require('dotenv').config();
 const app = express();
@@ -172,6 +173,29 @@ app.post('/api/logout', (req, res) => {
     sameSite: 'lax'
   }).json(true);
 });
+
+// Weather route
+app.get('/api/weather', async (req, res) => {
+  const { city } = req.query; // Get city from query parameter
+  const apiKey = 'e323089b22a14a73f9fc8db1ada5c7fc';
+  const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+
+  console.log('Fetching weather data for:', url);
+
+  try {
+    const response = await axios.get(url);
+    console.log('Weather API response:', response.data); // Debug log
+    res.json(response.data); // Return the weather data to the frontend
+  } catch (error) {
+    console.error('Error fetching weather data:', error.response?.data || error.message);
+    res.status(500).json({ 
+      error: 'Failed to fetch weather data', 
+      details: error.response?.data || error.message 
+    });
+  }
+});
+
+
 
 // Upload photo by link
 app.post('/api/upload-by-link', async (req, res) => {

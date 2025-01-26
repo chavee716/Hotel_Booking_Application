@@ -17,6 +17,7 @@ export default function Header() {
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const searchBarRef = useRef(null);
   const userDropdownRef = useRef(null);
+  const searchInputRef = useRef(null);
 
   const SearchModes = {
     STAY: 'stay',
@@ -52,6 +53,13 @@ export default function Header() {
     }
   }, [searchMode, isUserDropdownOpen]);
 
+  // Focus input when search mode is activated
+  useEffect(() => {
+    if (searchMode === SearchModes.STAY && searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  }, [searchMode]);
+
   const shouldHideHeader = 
     location.pathname === '/login' || 
     location.pathname === '/register';
@@ -62,6 +70,9 @@ export default function Header() {
       [field]: value
     }));
   };
+
+
+  
 
   const handleSearch = async () => {
     try {
@@ -74,7 +85,7 @@ export default function Header() {
 
   const handleSearchIconClick = (e) => {
     e.stopPropagation();
-    setSearchMode(SearchModes.STAY);
+    {searchMode === SearchModes.STAY && <SearchBar />};
   };
 
   const handleLogout = async () => {
@@ -102,65 +113,69 @@ export default function Header() {
     navigate('/login');
   };
 
-// Inside HeaderC.jsx, replace the SearchBar component with:
-
-const SearchBar = () => {
-  return (
-    <div 
-      ref={searchBarRef}
-      className={`fixed left-0 right-0 top-20 z-50 ${searchMode ? 'block' : 'hidden'}`}
-    >
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="bg-white shadow-2xl rounded-2xl p-6">
-          <div className="grid grid-cols-3 gap-4">
-            <div className="col-span-2">
-              <label className="block text-xs font-bold text-gray-600 mb-2">Where</label>
-              <input 
-                type="text"
-                placeholder="Enter hotel name or destination"
-                value={searchParams.destination || ''}
-                onChange={(e) => handleSearchParamChange('destination', e.target.value)}
-                className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-600 mb-2">Guests</label>
-              <div className="flex items-center">
-                <button 
-                  onClick={() => handleSearchParamChange('guests', Math.max(1, searchParams.guests - 1))}
-                  className="p-2 border rounded-l-lg hover:bg-gray-100"
-                >
-                  -
-                </button>
+  const SearchBar = () => {
+    return (
+      <div 
+        ref={searchBarRef}
+        className={`fixed left-0 right-0 top-20 z-50 ${searchMode ? 'block' : 'block'}`}
+      >
+        <div className="max-w-6xl mx-auto px-4">
+          <div className="bg-white shadow-2xl rounded-2xl p-6">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="col-span-2">
+                <label className="block text-xs font-bold text-gray-600 mb-2">Where</label>
                 <input 
-                  type="number" 
-                  value={searchParams.guests}
-                  onChange={(e) => handleSearchParamChange('guests', parseInt(e.target.value) || 1)}
-                  className="w-full p-3 text-center border-t border-b focus:outline-none"
-                  min="1"
+                  ref={searchInputRef}
+                  type="text"
+                  placeholder="Enter hotel name or destination"
+                  value={searchParams.destination || ''}
+                  onChange={(e) => {
+                    handleSearchParamChange('destination', e.target.value);
+                    // Prevent default event handling
+                    e.stopPropagation();
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-600 mb-2">Guests</label>
+                <div className="flex items-center">
+                  <button 
+                    onClick={() => handleSearchParamChange('guests', Math.max(1, searchParams.guests - 1))}
+                    className="p-2 border rounded-l-lg hover:bg-gray-100"
+                  >
+                    -
+                  </button>
+                  <input 
+                    type="number" 
+                    value={searchParams.guests}
+                    onChange={(e) => handleSearchParamChange('guests', parseInt(e.target.value) || 1)}
+                    className="w-full p-3 text-center border-t border-b focus:outline-none"
+                    min="1"
+                  />
+                  <button 
+                    onClick={() => handleSearchParamChange('guests', searchParams.guests + 1)}
+                    className="p-2 border rounded-r-lg hover:bg-gray-100"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+              <div className="col-span-3">
                 <button 
-                  onClick={() => handleSearchParamChange('guests', searchParams.guests + 1)}
-                  className="p-2 border rounded-r-lg hover:bg-gray-100"
+                  onClick={handleSearch}
+                  className="w-full bg-primary text-white p-3 rounded-lg hover:bg-red-600 transition"
                 >
-                  +
+                  Search
                 </button>
               </div>
-            </div>
-            <div className="col-span-3">
-              <button 
-                onClick={handleSearch}
-                className="w-full bg-primary text-white p-3 rounded-lg hover:bg-red-600 transition"
-              >
-                Search
-              </button>
             </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
   if (shouldHideHeader) {
     return null;
@@ -181,27 +196,23 @@ const SearchBar = () => {
             <span className="font-bold text-lg">Nestify</span>
           </div>
 
-          {/* Search Trigger - Only show when user is logged in */}
-          {user && (
+          {/* Search Trigger - Show for both logged-in and logged-out users */}
+          <div className="flex justify-center w-full">
             <div 
-              className="flex justify-center w-full" // Full width container and centering
+              className="search-trigger flex items-center border border-gray-300 rounded-full px-4 py-2 shadow-md cursor-pointer hover:shadow-lg transition w-full max-w-4xl justify-center"
+              onClick={() => setSearchMode(SearchModes.STAY)}
             >
-              <div 
-                className="search-trigger flex items-center border border-gray-300 rounded-full px-4 py-2 shadow-md cursor-pointer hover:shadow-lg transition w-full max-w-4xl justify-center" // Ensures max width and center
-                onClick={() => setSearchMode(SearchModes.STAY)}
+              <span className="text-sm font-medium mr-4">Where to?</span>
+              <button 
+                onClick={handleSearchIconClick}
+                className="bg-primary text-white rounded-full p-2"
               >
-                <span className="text-sm font-medium mr-4">Where to?</span>
-                <button 
-                  onClick={handleSearchIconClick}
-                  className="bg-primary text-white rounded-full p-2"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                  </svg>
-                </button>
-              </div>
-            </div> 
-          )}
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+              </button>
+            </div>
+          </div>
 
           {/* User Menu */}
           <div className="flex justify-end items-center w-full">
@@ -224,23 +235,39 @@ const SearchBar = () => {
                   </button>
 
                   {/* Dropdown Menu */}
-                  <div 
-                    className={`absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden transition-all duration-300 ease-in-out transform ${isUserDropdownOpen ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}
-                  >
-                    <button
-                      onClick={handleProfileClick}
-                      className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition"
-                    >
-                      Profile
-                    </button>
-                    <hr />
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-gray-50 transition"
-                    >
-                      Logout
-                    </button>
-                  </div>
+                  {/* Dropdown Menu */}
+<div 
+  className={`absolute 
+    right-0 
+    top-full 
+    mt-2 
+    w-48 
+    bg-white 
+    rounded-lg 
+    shadow-lg 
+    border 
+    border-gray-200 
+    overflow-hidden 
+    transition-all 
+    duration-300 
+    ease-in-out 
+    transform 
+    ${isUserDropdownOpen ? 'opacity-100 -translate-y-0 block' : 'opacity-0 translate-y-2 hidden'}`}
+>
+  <button
+    onClick={handleProfileClick}
+    className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition"
+  >
+    Profile
+  </button>
+  <hr />
+  <button
+    onClick={handleLogout}
+    className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-gray-50 transition"
+  >
+    Logout
+  </button>
+</div>
                 </>
               ) : (
                 <button
@@ -252,13 +279,11 @@ const SearchBar = () => {
               )}
             </div>
           </div>
-
         </div>
       </header>
 
-      {/* Search Bar - Only show when user is logged in */}
-      {user && <SearchBar />}
-
+      {searchMode === SearchModes.STAY && <SearchBar />}
+      
     </div>
   );
 }
