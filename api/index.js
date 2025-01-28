@@ -243,16 +243,22 @@ app.post('/api/upload', photosMiddleware.array('photos', 100), async (req, res) 
 app.post('/api/places', async (req, res) => {
   try {
     const userData = await getUserDataFromReq(req);
+    
     const {
-      title, address, addedPhotos, description, price,
+      title, address, photos, description, price,
       perks, extraInfo, checkIn, checkOut, maxGuests,
     } = req.body;
 
+    // Validate and format photos
+    const formattedPhotos = photos.map(photo => ({
+      url: photo.url || photo
+    }));
+    
     const placeDoc = await Place.create({
       owner: userData.id,
       title, 
       address,
-      photos: addedPhotos.map(url => ({ url })),
+      photos: formattedPhotos,
       description,
       perks,
       extraInfo,
@@ -261,9 +267,14 @@ app.post('/api/places', async (req, res) => {
       maxGuests,
       price,
     });
+    
     res.json(placeDoc);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to create place' });
+    console.error('Error creating place:', error);
+    res.status(500).json({ 
+      error: 'Failed to create place',
+      details: error.message 
+    });
   }
 });
 
@@ -297,7 +308,7 @@ app.put('/api/places', async (req, res) => {
   try {
     const userData = await getUserDataFromReq(req);
     const {
-      id, title, address, addedPhotos, description,
+      id, title, address, photos, description, // Changed 'addedPhotos' to 'photos'
       perks, extraInfo, checkIn, checkOut, maxGuests, price,
     } = req.body;
 
@@ -311,15 +322,15 @@ app.put('/api/places', async (req, res) => {
     }
 
     await placeDoc.updateOne({
-      title, 
-      address, 
-      photos: addedPhotos.map(url => ({ url })),
+      title,
+      address,
+      photos: photos.map(photo => ({ url: photo.url || photo })), // Adjusted mapping
       description,
-      perks, 
-      extraInfo, 
-      checkIn, 
-      checkOut, 
-      maxGuests, 
+      perks,
+      extraInfo,
+      checkIn,
+      checkOut,
+      maxGuests,
       price,
     });
 
@@ -328,6 +339,7 @@ app.put('/api/places', async (req, res) => {
     res.status(500).json({ error: 'Failed to update place' });
   }
 });
+
 
 // Get all places
 app.get('/api/places', async (req, res) => {

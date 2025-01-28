@@ -7,7 +7,7 @@ const WeatherSection = () => {
 
   // Fetch weather data via backend proxy
   useEffect(() => {
-    const cities = ["Colombo", "Kandy", "Galle", "Jaffna", "Trincomalee", "Nuwara Eliya"];
+    const cities = ["Colombo", "Kandy", "Galle", "Jaffna", "Trincomalee", "Nuwara Eliya", "Matara","Hambantota"];
     const fetchWeather = async () => {
       try {
         const weatherPromises = cities.map((city) =>
@@ -58,7 +58,7 @@ const WeatherSection = () => {
       </div>
 
       {/* Title at the top */}
-      <h2 className="text-2xl font-bold text-gray-800 mb-4 relative z-10 text-center pt-4">Weather in Sri Lanka</h2>
+      <h2 className="text-2xl font-bold text-gray-800 mb-4 relative z-10 text-center pt-4">Weather Today</h2>
 
       {weatherData.length > 0 ? (
         <div className="relative z-10 pt-12">

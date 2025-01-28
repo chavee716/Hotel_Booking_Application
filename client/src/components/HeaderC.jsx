@@ -183,7 +183,7 @@ export default function Header() {
 
   return (
     <div className="relative">
-      <header className="fixed w-full top-0 bg-white/200 shadow-sm z-50">
+      <header className="fixed w-full top-0 bg-white shadow-sm z-50">
         <div className="flex items-center justify-between p-4 max-w-6xl mx-auto">
           {/* Logo */}
           <div 
