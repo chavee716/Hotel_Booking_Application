@@ -195,6 +195,45 @@ app.get('/api/weather', async (req, res) => {
   }
 });
 
+app.get('/api/user-places-bookings', async (req, res) => {
+  try {
+    const userData = await getUserDataFromReq(req);
+    
+    // Aggregate places with booking counts
+    const placesWithBookings = await Place.aggregate([
+      // Match places owned by the user
+      { $match: { owner: new mongoose.Types.ObjectId(userData.id) } },
+      
+      // Left join with bookings
+      {
+        $lookup: {
+          from: 'bookings', // Make sure this matches your MongoDB collection name
+          localField: '_id',
+          foreignField: 'place',
+          as: 'bookings'
+        }
+      },
+      
+      // Project to include booking count and original place fields
+      {
+        $project: {
+          title: 1,
+          _id: 1,
+          bookingCount: { $size: '$bookings' }
+        }
+      }
+    ]);
+
+    res.json(placesWithBookings);
+  } catch (error) {
+    console.error('Error fetching user places with bookings:', error);
+    res.status(500).json({ 
+      error: 'Failed to fetch places with bookings',
+      details: error.message 
+    });
+  }
+});
+
 
 
 // Upload photo by link
