@@ -1,3 +1,4 @@
+// PlaceGallery.jsx
 import { useState } from "react";
 import Image from "./Image.jsx";
 
@@ -5,54 +6,58 @@ export default function PlaceGallery({ place }) {
   const [showFullScreenPhotos, setShowFullScreenPhotos] = useState(false);
   const [currentPhotoIndex, setCurrentPhotoIndex] = useState(0);
 
-  // Function to handle opening the full-screen photo view
   const openFullScreenPhotos = (index) => {
     setCurrentPhotoIndex(index);
     setShowFullScreenPhotos(true);
   };
 
-  // Function to handle closing the full-screen photo view
   const closeFullScreenPhotos = () => {
     setShowFullScreenPhotos(false);
   };
 
-  // Function to handle navigating to the next photo
   const navigateToNextPhoto = () => {
     setCurrentPhotoIndex((prevIndex) => (prevIndex + 1) % place.photos.length);
   };
 
-  // Function to handle navigating to the previous photo
   const navigateToPreviousPhoto = () => {
     setCurrentPhotoIndex((prevIndex) => (prevIndex - 1 + place.photos.length) % place.photos.length);
   };
 
   return (
     <div className="relative">
-      <div className="grid grid-cols-2 gap-2 rounded-3xl overflow-hidden h-[400px]">
-        {place.photos?.[0] && (
-          <Image
-            onClick={() => openFullScreenPhotos(0)}
-            className="w-full h-full object-cover cursor-pointer"
-            src={place.photos[0].url}
-            alt=""
-          />
-        )}
-        {place.photos?.[1] && (
-          <Image
-            onClick={() => openFullScreenPhotos(1)}
-            className="w-full h-1/2 object-cover cursor-pointer"
-            src={place.photos[1].url}
-            alt=""
-          />
-        )}
-        {place.photos?.[2] && (
-          <Image
-            onClick={() => openFullScreenPhotos(2)}
-            className="w-full h-1/2 object-cover cursor-pointer"
-            src={place.photos[2].url}
-            alt=""
-          />
-        )}
+      <div className="grid gap-2 rounded-3xl overflow-hidden h-[400px]">
+        <div className="grid grid-cols-[2fr_1fr] gap-2">
+          {place.photos?.[0] && (
+            <div className="h-full">
+              <Image
+                onClick={() => openFullScreenPhotos(0)}
+                className="w-full h-full object-cover cursor-pointer aspect-square"
+                src={place.photos[0].url}
+                alt=""
+              />
+            </div>
+          )}
+          <div className="grid">
+            <div className="grid gap-2">
+              {place.photos?.[1] && (
+                <Image
+                  onClick={() => openFullScreenPhotos(1)}
+                  className="aspect-square object-cover cursor-pointer h-full"
+                  src={place.photos[1].url}
+                  alt=""
+                />
+              )}
+              {place.photos?.[2] && (
+                <Image
+                  onClick={() => openFullScreenPhotos(2)}
+                  className="aspect-square object-cover cursor-pointer h-full"
+                  src={place.photos[2].url}
+                  alt=""
+                />
+              )}
+            </div>
+          </div>
+        </div>
       </div>
       <button
         onClick={() => openFullScreenPhotos(0)}
@@ -96,7 +101,7 @@ export default function PlaceGallery({ place }) {
                   </svg>
                 </button>
                 <Image
-                  src={place.photos[currentPhotoIndex]}
+                  src={place.photos[currentPhotoIndex].url}
                   alt={`Photo ${currentPhotoIndex + 1}`}
                   className="max-w-3xl w-full object-contain"
                 />

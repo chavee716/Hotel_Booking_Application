@@ -25,7 +25,6 @@ export default function Header() {
     ONLINE_EXPERIENCE: 'online_experience'
   };
 
-  // Handle clicks outside dropdowns
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -53,7 +52,6 @@ export default function Header() {
     }
   }, [searchMode, isUserDropdownOpen]);
 
-  // Focus input when search mode is activated
   useEffect(() => {
     if (searchMode === SearchModes.STAY && searchInputRef.current) {
       searchInputRef.current.focus();
@@ -71,9 +69,6 @@ export default function Header() {
     }));
   };
 
-
-  
-
   const handleSearch = async () => {
     try {
       navigate('/search', { state: { searchParams } });
@@ -81,11 +76,6 @@ export default function Header() {
     } catch (error) {
       console.error('Search failed:', error);
     }
-  };
-
-  const handleSearchIconClick = (e) => {
-    e.stopPropagation();
-    {searchMode === SearchModes.STAY && <SearchBar />};
   };
 
   const handleLogout = async () => {
@@ -114,10 +104,17 @@ export default function Header() {
   };
 
   const SearchBar = () => {
+    const handleInputChange = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const value = e.target.value;
+      handleSearchParamChange('destination', value);
+    };
+
     return (
       <div 
         ref={searchBarRef}
-        className={`fixed left-0 right-0 top-20 z-50 ${searchMode ? 'block' : 'block'}`}
+        className="fixed left-0 right-0 top-20 z-50"
       >
         <div className="max-w-6xl mx-auto px-4">
           <div className="bg-white shadow-2xl rounded-2xl p-6">
@@ -128,13 +125,8 @@ export default function Header() {
                   ref={searchInputRef}
                   type="text"
                   placeholder="Enter hotel name or destination"
-                  value={searchParams.destination || ''}
-                  onChange={(e) => {
-                    handleSearchParamChange('destination', e.target.value);
-                    // Prevent default event handling
-                    e.stopPropagation();
-                  }}
-                  onClick={(e) => e.stopPropagation()}
+                  value={searchParams.destination}
+                  onChange={handleInputChange}
                   className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
                 />
               </div>
@@ -142,7 +134,10 @@ export default function Header() {
                 <label className="block text-xs font-bold text-gray-600 mb-2">Guests</label>
                 <div className="flex items-center">
                   <button 
-                    onClick={() => handleSearchParamChange('guests', Math.max(1, searchParams.guests - 1))}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSearchParamChange('guests', Math.max(1, searchParams.guests - 1));
+                    }}
                     className="p-2 border rounded-l-lg hover:bg-gray-100"
                   >
                     -
@@ -150,12 +145,18 @@ export default function Header() {
                   <input 
                     type="number" 
                     value={searchParams.guests}
-                    onChange={(e) => handleSearchParamChange('guests', parseInt(e.target.value) || 1)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      handleSearchParamChange('guests', parseInt(e.target.value) || 1);
+                    }}
                     className="w-full p-3 text-center border-t border-b focus:outline-none"
                     min="1"
                   />
                   <button 
-                    onClick={() => handleSearchParamChange('guests', searchParams.guests + 1)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSearchParamChange('guests', searchParams.guests + 1);
+                    }}
                     className="p-2 border rounded-r-lg hover:bg-gray-100"
                   >
                     +
@@ -164,7 +165,10 @@ export default function Header() {
               </div>
               <div className="col-span-3">
                 <button 
-                  onClick={handleSearch}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSearch();
+                  }}
                   className="w-full bg-primary text-white p-3 rounded-lg hover:bg-red-600 transition"
                 >
                   Search
@@ -196,7 +200,7 @@ export default function Header() {
             <span className="font-bold text-lg">Traveller</span>
           </div>
 
-          {/* Search Trigger - Show for both logged-in and logged-out users */}
+          {/* Search Trigger */}
           <div className="flex justify-center w-full">
             <div 
               className="search-trigger flex items-center border border-gray-300 rounded-full px-4 py-2 shadow-md cursor-pointer hover:shadow-lg transition w-full max-w-4xl justify-center"
@@ -204,7 +208,10 @@ export default function Header() {
             >
               <span className="text-sm font-medium mr-4">Where to?</span>
               <button 
-                onClick={handleSearchIconClick}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setSearchMode(SearchModes.STAY);
+                }}
                 className="bg-primary text-white rounded-full p-2"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4">
@@ -235,39 +242,25 @@ export default function Header() {
                   </button>
 
                   {/* Dropdown Menu */}
-                  {/* Dropdown Menu */}
-<div 
-  className={`absolute 
-    right-0 
-    top-full 
-    mt-2 
-    w-48 
-    bg-white 
-    rounded-lg 
-    shadow-lg 
-    border 
-    border-gray-200 
-    overflow-hidden 
-    transition-all 
-    duration-300 
-    ease-in-out 
-    transform 
-    ${isUserDropdownOpen ? 'opacity-100 -translate-y-0 block' : 'opacity-0 translate-y-2 hidden'}`}
->
-  <button
-    onClick={handleProfileClick}
-    className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition"
-  >
-    Profile
-  </button>
-  <hr />
-  <button
-    onClick={handleLogout}
-    className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-gray-50 transition"
-  >
-    Logout
-  </button>
-</div>
+                  <div 
+                    className={`absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden transition-all duration-300 ease-in-out transform ${
+                      isUserDropdownOpen ? 'opacity-100 -translate-y-0 block' : 'opacity-0 translate-y-2 hidden'
+                    }`}
+                  >
+                    <button
+                      onClick={handleProfileClick}
+                      className="w-full text-left px-4 py-3 text-sm hover:bg-gray-50 transition"
+                    >
+                      Profile
+                    </button>
+                    <hr />
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-3 text-sm text-red-600 hover:bg-gray-50 transition"
+                    >
+                      Logout
+                    </button>
+                  </div>
                 </>
               ) : (
                 <button
@@ -283,7 +276,6 @@ export default function Header() {
       </header>
 
       {searchMode === SearchModes.STAY && <SearchBar />}
-      
     </div>
   );
 }

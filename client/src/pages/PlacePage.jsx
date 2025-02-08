@@ -64,6 +64,28 @@ export default function PlacePage() {
             <h2 className="font-semibold text-2xl">Description</h2>
             <p className="leading-6 text-gray-700 mb-4">{place.description}</p>
             
+            <div className="border rounded-2xl p-4 bg-white mb-4">
+              <h3 className="font-semibold text-xl mb-2">Room Details</h3>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <h4 className="font-medium text-gray-700">Room Type</h4>
+                  <p className="text-gray-600">Standard Suite</p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-700">Room Size</h4>
+                  <p className="text-gray-600">28m²</p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-700">Bed Type</h4>
+                  <p className="text-gray-600">1 Queen Bed</p>
+                </div>
+                <div>
+                  <h4 className="font-medium text-gray-700">Max Guests</h4>
+                  <p className="text-gray-600">{place.maxGuests} people</p>
+                </div>
+              </div>
+            </div>
+            
             {place.perks && place.perks.length > 0 && (
               <div>
                 <h3 className="font-semibold text-xl mb-2">Amenities</h3>
@@ -85,9 +107,11 @@ export default function PlacePage() {
               </div>
             )}
           </div>
-          Check-in: {place.checkIn}<br />
-          Check-out: {place.checkOut}<br />
-          Max number of guests: {place.maxGuests}
+          <div className="text-gray-700">
+            Check-in: {place.checkIn}<br />
+            Check-out: {place.checkOut}<br />
+            Max number of guests: {place.maxGuests}
+          </div>
         </div>
         <div>
           <BookingWidget place={place} />

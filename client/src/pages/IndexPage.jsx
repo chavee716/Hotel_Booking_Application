@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, Suspense, lazy } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import axios from "axios";
-import { Link } from "react-router-dom";
 
 const WeatherSection = lazy(() => import("../components/WeatherSection"));
 const PromotionalBanner = lazy(() => import("../components/Banner"));
@@ -96,62 +96,92 @@ const FilterIcons = [
     )
   }
 ];
+
 const PlaceCard = React.memo(({ place }) => (
   <Link
     to={`/place/${place._id}`}
-    className="transform transition duration-300 hover:scale-105 hover:shadow-lg"
+    className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition duration-300"
   >
-    <div className="bg-gray-500 mb-2 rounded-2xl flex overflow-hidden">
-      {place.photos?.[0]?.url ? (
-        <img
-          className="rounded-2xl object-cover aspect-square transition duration-300 hover:opacity-90"
-          src={`http://localhost:5000${place.photos[0].url}`}
-          alt={place.title || "Hotel"}
-          loading="lazy" // Native lazy loading
-          decoding="async" // Async image decoding
-        />
-      ) : (
-        <div className="w-full aspect-square bg-gray-200 flex items-center justify-center">
-          <span className="text-gray-500">No Image</span>
-        </div>
-      )}
+    <div className="relative pb-[75%]">
+      <img
+        src={`http://localhost:5000${place.photos[0].url}`}
+        alt={place.title}
+        className="absolute inset-0 w-full h-full object-cover"
+        loading="lazy"
+        decoding="async"
+      />
     </div>
-    <h2 className="font-bold truncate transition duration-300 hover:text-blue-600">
-      {place.title}
-    </h2>
-    <h3 className="text-sm text-gray-500 truncate">{place.address}</h3>
-    <div className="mt-1">
-      <span className="font-bold">${place.price}</span> per night
+    <div className="p-4">
+      <h2 className="font-bold text-lg mb-2 truncate">{place.title}</h2>
+      <p className="text-gray-600 text-sm mb-2 truncate">{place.address}</p>
+      <div className="flex items-center mb-2">
+        <span className="text-yellow-500 mr-1">★</span>
+        <span className="text-gray-700">{place.rating || '4.5'}</span>
+        <span className="text-gray-500 text-sm ml-1">({place.reviews || '100'} reviews)</span>
+      </div>
+      <div className="flex flex-wrap gap-2 mb-3">
+        {place.perks?.map((perk, index) => (
+          <span 
+            key={index}
+            className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded-full"
+          >
+            {perk}
+          </span>
+        ))}
+      </div>
+      <div className="text-lg font-bold">
+        ${place.price}
+        <span className="text-gray-500 text-sm font-normal"> /night</span>
+      </div>
     </div>
   </Link>
 ));
 
 export default function IndexPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [places, setPlaces] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  
-  // Pagination and filtering states
-  const [currentPage, setCurrentPage] = useState(1);
-  const [selectedFilter, setSelectedFilter] = useState(null);
-  const [currentSlide, setCurrentSlide] = useState(0);
-  
-  // Optimization: Configurable places per page
-  const PLACES_PER_PAGE = 8;
+  const [currentPage, setCurrentPage] = useState(() => {
+    return parseInt(sessionStorage.getItem('indexPageNumber') || '1');
+  });
+  const placesPerPage = 12; // Increased from 8 to 12 cards per page
 
-  // Fetch places with error handling and loading state
+  // Save scroll position when leaving the page
+  useEffect(() => {
+    const handleScroll = () => {
+      sessionStorage.setItem('indexPageScrollPos', window.scrollY.toString());
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  // Restore scroll position when returning
+  useEffect(() => {
+    const savedScrollPos = sessionStorage.getItem('indexPageScrollPos');
+    
+    if (savedScrollPos && location.state?.from === 'placeDetail') {
+      setTimeout(() => {
+        window.scrollTo({
+          top: parseInt(savedScrollPos),
+          behavior: 'instant'
+        });
+      }, 100);
+    }
+  }, [location]);
+
+  // Save current page to sessionStorage
+  useEffect(() => {
+    sessionStorage.setItem('indexPageNumber', currentPage.toString());
+  }, [currentPage]);
+
   useEffect(() => {
     const fetchPlaces = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get("http://localhost:5000/api/places", {
-          // Add caching headers
-          headers: {
-            'Cache-Control': 'max-age=3600' // Cache for 1 hour
-          }
-        });
-        
-        // Validate and set places
+        const response = await axios.get("http://localhost:5000/api/places");
         setPlaces(Array.isArray(response.data) ? response.data : []);
         setError(null);
       } catch (err) {
@@ -165,49 +195,18 @@ export default function IndexPage() {
     fetchPlaces();
   }, []);
 
-  // Memoized filtering and pagination logic
-  const { 
-    filteredPlaces, 
-    currentPlaces, 
-    totalPages 
-  } = useMemo(() => {
-    // Filter places based on selected category
-    const filtered = selectedFilter
-      ? places.filter(place => 
-          place.categories?.includes(selectedFilter.toLowerCase())
-        )
-      : places;
+  const totalPages = Math.ceil(places.length / placesPerPage);
 
-    // Pagination calculations
-    const startIndex = (currentPage - 1) * PLACES_PER_PAGE;
-    const endIndex = startIndex + PLACES_PER_PAGE;
-    
-    return {
-      filteredPlaces: filtered,
-      currentPlaces: filtered.slice(startIndex, endIndex),
-      totalPages: Math.ceil(filtered.length / PLACES_PER_PAGE)
-    };
-  }, [places, selectedFilter, currentPage]);
+  const handleCategoryClick = (category) => {
+    sessionStorage.removeItem('indexPageScrollPos');
+    navigate(`/category/${category}`);
+  };
 
-  // Slideshow effect with optimization
-  useEffect(() => {
-    if (places.length === 0) return;
-
-    const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % places.length);
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [places]);
-
-  // Pagination handlers
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
-    // Scroll to top of page
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Render loading state
   if (isLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -216,14 +215,13 @@ export default function IndexPage() {
     );
   }
 
-  // Render error state
   if (error) {
     return (
       <div className="text-center text-red-500 mt-20">
-        {error}
+        <p>{error}</p>
         <button 
           onClick={() => window.location.reload()} 
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition duration-300"
         >
           Try Again
         </button>
@@ -231,60 +229,78 @@ export default function IndexPage() {
     );
   }
 
+  // Calculate current places to display
+  const indexOfLastPlace = currentPage * placesPerPage;
+  const indexOfFirstPlace = indexOfLastPlace - placesPerPage;
+  const currentPlaces = places.slice(indexOfFirstPlace, indexOfLastPlace);
+
   return (
     <div className="mt-20 container mx-auto px-4">
-      {/* Filter Row */}
-      <div className="flex justify-center items-center space-x-6 mb-6">
-        {FilterIcons.map((filterItem) => (
+      {/* Filter Categories */}
+      <div className="flex justify-center gap-6 mb-8 overflow-x-auto pb-4">
+        {FilterIcons.map((filter) => (
           <button
-            key={filterItem.name}
-            className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-300 hover:bg-gray-100 ${
-              selectedFilter === filterItem.name 
-                ? 'bg-gray-200 text-primary' 
-                : 'text-gray-600'
-            }`}
-            onClick={() => {
-              setSelectedFilter(
-                selectedFilter === filterItem.name ? null : filterItem.name
-              );
-              // Reset to first page when filter changes
-              setCurrentPage(1);
-            }}
+            key={filter.name}
+            onClick={() => handleCategoryClick(filter.category)}
+            className="flex flex-col items-center p-3 rounded-lg transition-all duration-300 min-w-[80px] hover:bg-gray-100 text-gray-600"
           >
-            {filterItem.icon}
-            <span className="text-xs mt-1">{filterItem.name}</span>
+            {filter.icon}
+            <span className="text-sm mt-2 whitespace-nowrap">{filter.name}</span>
           </button>
         ))}
       </div>
 
-      {/* Suspend lazy-loaded components */}
       <Suspense fallback={<div>Loading...</div>}>
         <PromotionalBanner />
       </Suspense>
 
-      {/* Place Cards Grid */}
-      <div className="grid gap-x-6 gap-y-8 grid-cols-2 md:grid-cols-3 lg:grid-cols-4 mb-8">
+      {/* Places Grid */}
+      <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
         {currentPlaces.map((place) => (
           <PlaceCard key={place._id} place={place} />
         ))}
       </div>
 
-      {/* Pagination Controls */}
+      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex justify-center space-x-2 mt-6">
+        <div className="flex justify-center gap-2 mt-8 mb-8">
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            className={`px-4 py-2 rounded ${
+              currentPage === 1
+                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                : 'bg-primary text-white hover:bg-blue-600'
+            }`}
+          >
+            Previous
+          </button>
+          
           {[...Array(totalPages)].map((_, index) => (
             <button
               key={index}
               onClick={() => handlePageChange(index + 1)}
               className={`px-4 py-2 rounded ${
-                currentPage === index + 1 
-                  ? 'bg-blue-500 text-white' 
-                  : 'bg-gray-200 text-gray-700'
+                currentPage === index + 1
+                  ? 'bg-primary text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
               }`}
             >
               {index + 1}
             </button>
           ))}
+          
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            className={`px-4 py-2 rounded ${
+              currentPage === totalPages
+                ? 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                : 'bg-primary text-white hover:bg-blue-600'
+            }`}
+          >
+            Next
+          </button>
         </div>
       )}
     </div>

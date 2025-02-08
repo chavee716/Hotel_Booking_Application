@@ -17,19 +17,21 @@ const PriceFilter = ({ results, onFilterChange }) => {
   }, [results]);
 
   const handleInputChange = (type, value) => {
-    const newRange = {
-      ...tempRange,
-      [type]: parseInt(value)
-    };
-    setTempRange(newRange);
+    const newValue = parseInt(value) || 0;
+    if (type === 'min' && newValue <= tempRange.max) {
+      setTempRange(prev => ({ ...prev, min: newValue }));
+    } else if (type === 'max' && newValue >= tempRange.min) {
+      setTempRange(prev => ({ ...prev, max: newValue }));
+    }
   };
 
   const handleSliderChange = (type, value) => {
-    const newRange = {
-      ...tempRange,
-      [type]: parseInt(value)
-    };
-    setTempRange(newRange);
+    const newValue = parseInt(value);
+    if (type === 'min' && newValue <= tempRange.max) {
+      setTempRange(prev => ({ ...prev, min: newValue }));
+    } else if (type === 'max' && newValue >= tempRange.min) {
+      setTempRange(prev => ({ ...prev, max: newValue }));
+    }
   };
 
   const applyFilter = () => {
@@ -44,7 +46,7 @@ const PriceFilter = ({ results, onFilterChange }) => {
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow mb-4">
+    <div className="bg-gray-200 p-4 rounded-lg shadow mb-4">
       <h3 className="text-lg font-semibold mb-4">Price Range</h3>
       
       {/* Price Range Inputs */}
@@ -80,28 +82,33 @@ const PriceFilter = ({ results, onFilterChange }) => {
           </div>
         </div>
 
-        {/* Price Range Sliders */}
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Minimum Price</label>
+        {/* Dual Range Slider */}
+        <div className="mt-6 mb-2">
+          <label className="block text-sm text-gray-600 mb-3">Price Range</label>
+          <div className="relative h-2">
+            <div className="absolute w-full h-full bg-gray-200 rounded"></div>
+            <div
+              className="absolute h-full bg-primary rounded"
+              style={{
+                left: `${((tempRange.min - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%`,
+                right: `${100 - ((tempRange.max - priceRange.min) / (priceRange.max - priceRange.min)) * 100}%`
+              }}
+            ></div>
             <input
               type="range"
               min={priceRange.min}
               max={priceRange.max}
               value={tempRange.min}
               onChange={(e) => handleSliderChange('min', e.target.value)}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              className="absolute w-full h-full appearance-none pointer-events-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-orange-500 [&::-webkit-slider-thumb]:appearance-none [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-orange-500 [&::-moz-range-thumb]:appearance-none"
             />
-          </div>
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">Maximum Price</label>
             <input
               type="range"
               min={priceRange.min}
               max={priceRange.max}
               value={tempRange.max}
               onChange={(e) => handleSliderChange('max', e.target.value)}
-              className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+              className="absolute w-full h-full appearance-none pointer-events-none bg-transparent [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-orange-500 [&::-webkit-slider-thumb]:appearance-none [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white [&::-moz-range-thumb]:border-2 [&::-moz-range-thumb]:border-orange-500 [&::-moz-range-thumb]:appearance-none"
             />
           </div>
         </div>

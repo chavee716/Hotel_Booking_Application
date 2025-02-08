@@ -39,9 +39,16 @@ export default function SearchResultsPage() {
 
   const calculateRelevance = (place, query) => {
     if (!query) return 0;
-    const titleMatch = place.title.toLowerCase().includes(query.toLowerCase()) ? 1 : 0;
-    const descriptionMatch = place.description.toLowerCase().includes(query.toLowerCase()) ? 1 : 0;
-    return titleMatch + descriptionMatch;
+    query = query.toLowerCase();
+    const title = place.title.toLowerCase();
+    
+    // If title starts with the query, give it highest relevance
+    if (title.startsWith(query)) return 3;
+    // If title contains the query, give it medium relevance
+    if (title.includes(query)) return 2;
+    // If description contains the query, give it lowest relevance
+    if (place.description.toLowerCase().includes(query)) return 1;
+    return 0;
   };
 
   const filterResults = (results) => {
@@ -60,7 +67,14 @@ export default function SearchResultsPage() {
       sortedResults = sortedResults.sort((a, b) => {
         const relevanceA = calculateRelevance(a, searchQuery);
         const relevanceB = calculateRelevance(b, searchQuery);
-        return relevanceB - relevanceA;
+        
+        // If relevance scores are different, sort by relevance
+        if (relevanceB !== relevanceA) {
+          return relevanceB - relevanceA;
+        }
+        
+        // If relevance scores are the same, sort alphabetically
+        return a.title.localeCompare(b.title);
       });
     }
 
@@ -102,7 +116,7 @@ export default function SearchResultsPage() {
             className="p-2 border rounded-lg"
           >
             <option value="price">Sort by Price</option>
-            <option value="relevance">Sort by Relevance</option>
+            <option value="relevance">Sort by Relevance & Alphabetical</option>
           </select>
         </div>
         
